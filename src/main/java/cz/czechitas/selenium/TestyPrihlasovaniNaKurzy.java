@@ -12,6 +12,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestyPrihlasovaniNaKurzy {
 
     WebDriver prohlizec;
@@ -23,8 +24,8 @@ public class TestyPrihlasovaniNaKurzy {
         prohlizec.manage().timeouts().implicitlyWait(20, TimeUnit.SECONDS);
     }
 
-
     @Test
+    @Order(1)
     public void rodicSExistujicimUctemJeSchopenSePrihlasit() {
         prohlizec.navigate().to("https://cz-test-jedna.herokuapp.com/prihlaseni");
         prihlasenirodiceKarla();
@@ -33,6 +34,7 @@ public class TestyPrihlasovaniNaKurzy {
     }
 
     @Test
+    @Order(2)
     public void rodicMuzeVybratKurzAPrihlasitsedoAplikaceAZapsatDite() {
         prohlizec.navigate().to("https://cz-test-jedna.herokuapp.com/");
         vyberKurzJava();
@@ -46,6 +48,7 @@ public class TestyPrihlasovaniNaKurzy {
     }
 
     @Test
+    @Order(3)
     public void rodicSeMuzePrihlasitVyhledatKurzAPrihlasitDite() {
         prohlizec.navigate().to("https://cz-test-jedna.herokuapp.com/prihlaseni");
         prihlasenirodiceKarla();
@@ -60,18 +63,27 @@ public class TestyPrihlasovaniNaKurzy {
     }
 
     @Test
+    @Order(5)
     public void rodicSeMuzeOdhlasitZUzivatelskehoProfilu() {
         prohlizec.navigate().to("https://cz-test-jedna.herokuapp.com/prihlaseni");
         prihlasenirodiceKarla();
         odhlaseniUzivatele();
+        WebDriverWait cekani = new WebDriverWait(prohlizec, 10);
+        cekani.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//a[@href='https://cz-test-jedna.herokuapp.com/prihlaseni']")));
     }
 
+    @Test
+    @Order(4)
+    public void rodicMuzeOdhlasitZakaZeVsechKurzuBezUdaniDuvodu() {
+        prohlizec.navigate().to("https://cz-test-jedna.herokuapp.com/prihlaseni");
+        prihlasenirodiceKarla();
+        odhlasZakaZeVsechKurzu();
+    }
 
     @AfterEach
     public void tearDown() {
         prohlizec.quit();
     }
-
 
     public void prihlasenirodiceKarla() {
         WebElement email = prohlizec.findElement(By.id("email"));
@@ -111,11 +123,25 @@ public class TestyPrihlasovaniNaKurzy {
         vytvorPrihlasku.click();
     }
 
-
     public void odhlaseniUzivatele() {
         WebElement jmenoUzivatele = prohlizec.findElement(By.xpath("//a[@class='dropdown-toggle']"));
         jmenoUzivatele.click();
         WebElement odhlasit = prohlizec.findElement(By.id("logout-link"));
         odhlasit.click();
     }
+
+    public void odhlasZakaZeVsechKurzu() {
+        int pocetOdhlaseniZKurzu = 0;
+        while (prohlizec.findElements(By.xpath("//a[@class='btn btn-sm btn-danger']")).size()>0) {
+            WebElement odhlasovaciTlacitko = prohlizec.findElement(By.xpath("//a[@class='btn btn-sm btn-danger']"));
+            odhlasovaciTlacitko.click();
+            WebElement jinyDuvod = prohlizec.findElement(By.xpath("//label[@for='logged_out_other']"));
+            jinyDuvod.click();
+            WebElement odhlasitZaka = prohlizec.findElement(By.xpath("//input[@value='Odhlásit žáka']"));
+            odhlasitZaka.click();
+            pocetOdhlaseniZKurzu++;
+        }
+        Assertions.assertNotEquals(0, pocetOdhlaseniZKurzu, "Zak nemel zadny kurz na odhlaseni");
+    }
+
 }
